@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SCTA Workbench — Safety Critical Task Analysis</title>
+<meta name="description" content="A structured workbench for human factors safety critical task analysis in oil, gas and energy facilities. Runs entirely in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A24; --ink2:#35495A; --ink3:#6B7A86;
+  --paper:#FFFFFF; --field:#EEF2F5; --field2:#F7F9FA;
+  --rule:#CBD5DD; --rule2:#E4EAEE;
+  --duty:#0B6B70; --duty-dk:#085458; --duty-tint:#E2F0F0;
+  --red:#B3261E; --red-tint:#FBE9E7;
+  --amber:#B26A00; --amber-tint:#FDF1DF;
+  --green:#1E6B3A; --green-tint:#E6F2EA;
+  --grey-tint:#EDF1F3;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(14,26,36,.08),0 8px 24px rgba(14,26,36,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);font-size:15px;line-height:1.5;color:var(--ink);background:var(--field);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-weight:600;line-height:1.25}
+p{margin:0 0 .75rem}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--duty)}
+:focus-visible{outline:2px solid var(--duty);outline-offset:2px}
+
+/* ---------- title block ---------- */
+.titleblock{display:flex;align-items:stretch;gap:0;background:var(--ink);color:#fff;border-bottom:3px solid var(--duty)}
+.tb-mark{display:flex;flex-direction:column;justify-content:center;padding:.65rem 1.1rem;border-right:1px solid rgba(255,255,255,.18);min-width:210px}
+.tb-mark strong{font-size:1.05rem;letter-spacing:-.01em}
+.tb-mark span{font-size:.72rem;color:#9FB4C2;font-family:var(--mono)}
+.tb-fields{display:flex;flex:1;flex-wrap:wrap;align-items:center;gap:0}
+.tb-f{padding:.45rem .9rem;border-right:1px solid rgba(255,255,255,.12);min-width:130px}
+.tb-f label{display:block;font-size:.66rem;color:#8FA7B7;font-family:var(--mono);margin-bottom:.1rem}
+.tb-f .v{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26ch}
+.tb-actions{display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem}
+.tb-actions button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:3px;padding:.35rem .7rem;font-size:.8rem;cursor:pointer}
+.tb-actions button:hover{background:rgba(255,255,255,.18)}
+.tb-actions button.primary{background:var(--duty);border-color:var(--duty)}
+.tb-actions button.primary:hover{background:var(--duty-dk)}
+
+/* ---------- shell ---------- */
+.shell{display:flex;align-items:flex-start;min-height:calc(100vh - 58px)}
+.spine{width:246px;flex:0 0 246px;background:var(--paper);border-right:1px solid var(--rule);padding:.9rem 0 2rem;position:sticky;top:0;align-self:stretch}
+.spine h2{font-size:.68rem;font-family:var(--mono);color:var(--ink3);padding:0 1rem .5rem;font-weight:500}
+.spine a{display:flex;gap:.65rem;align-items:baseline;padding:.5rem 1rem;text-decoration:none;color:var(--ink2);border-left:3px solid transparent;font-size:.88rem}
+.spine a:hover{background:var(--field2);color:var(--ink)}
+.spine a.on{background:var(--duty-tint);border-left-color:var(--duty);color:var(--ink);font-weight:600}
+.spine .n{font-family:var(--mono);font-size:.75rem;color:var(--ink3);min-width:1.1rem}
+.spine a.on .n{color:var(--duty-dk)}
+.spine .count{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--ink3)}
+.spine hr{border:0;border-top:1px solid var(--rule2);margin:.7rem 1rem}
+
+.surface{flex:1;min-width:0;padding:1.4rem 1.6rem 4rem}
+.panel{display:none;max-width:1180px}
+.panel.on{display:block}
+.phead{margin-bottom:1rem}
+.phead h1{font-size:1.5rem;letter-spacing:-.015em}
+.phead .lede{color:var(--ink2);max-width:74ch;margin-top:.3rem}
+.step-tag{font-family:var(--mono);font-size:.72rem;color:var(--duty-dk);background:var(--duty-tint);padding:.15rem .45rem;border-radius:2px;display:inline-block;margin-bottom:.45rem}
+
+/* ---------- cards & forms ---------- */
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:1rem 1.1rem;margin-bottom:1rem}
+.card h3{font-size:.95rem;margin-bottom:.6rem}
+.grid{display:grid;gap:.75rem}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+label.fl{display:block;font-size:.76rem;color:var(--ink2);margin-bottom:.22rem;font-weight:500}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%;padding:.42rem .55rem;border:1px solid var(--rule);border-radius:3px;background:var(--paper)}
+textarea{min-height:64px;resize:vertical;line-height:1.45}
+input:hover,select:hover,textarea:hover{border-color:var(--ink3)}
+.hint{font-size:.76rem;color:var(--ink3);margin-top:.25rem}
+
+.btn{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:.4rem .8rem;font-size:.85rem;cursor:pointer;color:var(--ink)}
+.btn:hover{background:var(--field2);border-color:var(--ink3)}
+.btn.primary{background:var(--duty);border-color:var(--duty);color:#fff}
+.btn.primary:hover{background:var(--duty-dk)}
+.btn.danger{color:var(--red);border-color:#E7C4C1}
+.btn.danger:hover{background:var(--red-tint)}
+.btn.sm{padding:.2rem .45rem;font-size:.76rem}
+.row-actions{display:flex;gap:.3rem;justify-content:flex-end}
+.toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem}
+.toolbar .spacer{flex:1}
+
+/* ---------- tables ---------- */
+.tbl{width:100%;border-collapse:collapse;background:var(--paper);font-size:.84rem}
+.tbl th{text-align:left;background:var(--field);border:1px solid var(--rule);padding:.45rem .55rem;font-weight:600;font-size:.76rem;color:var(--ink2);vertical-align:bottom}
+.tbl td{border:1px solid var(--rule2);padding:.45rem .55rem;vertical-align:top}
+.tbl tr:hover td{background:var(--field2)}
+.tbl .ref{font-family:var(--mono);font-size:.78rem;white-space:nowrap}
+.tbl td.num{text-align:center;font-family:var(--mono)}
+.wrap{overflow-x:auto;border-radius:4px}
+
+.pill{display:inline-block;font-size:.7rem;font-family:var(--mono);padding:.1rem .4rem;border-radius:2px;white-space:nowrap;border:1px solid transparent}
+.p-crit{background:var(--red-tint);color:var(--red);border-color:#E7C4C1}
+.p-high{background:var(--amber-tint);color:var(--amber);border-color:#EED9B4}
+.p-med{background:var(--duty-tint);color:var(--duty-dk);border-color:#BFDCDC}
+.p-low{background:var(--grey-tint);color:var(--ink3);border-color:var(--rule2)}
+.p-done{background:var(--green-tint);color:var(--green);border-color:#C3DFCD}
+
+.empty{border:1px dashed var(--rule);border-radius:4px;padding:1.6rem;text-align:center;color:var(--ink2);background:var(--paper)}
+.empty p{max-width:56ch;margin:0 auto .8rem}
+
+/* ---------- dialogs ---------- */
+dialog{border:1px solid var(--rule);border-radius:5px;padding:0;width:min(940px,94vw);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(14,26,36,.45)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1.1rem;border-bottom:1px solid var(--rule);background:var(--field)}
+.dlg-head h3{font-size:1rem}
+.dlg-body{padding:1.1rem;max-height:70vh;overflow:auto}
+.dlg-foot{display:flex;gap:.5rem;justify-content:flex-end;padding:.75rem 1.1rem;border-top:1px solid var(--rule);background:var(--field2)}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.2rem}
+.chip{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:.2rem .45rem;font-size:.76rem;cursor:pointer}
+.chip.on{background:var(--duty);border-color:var(--duty);color:#fff}
+.chip small{font-family:var(--mono);opacity:.7;margin-right:.25rem}
+.fieldset{border:1px solid var(--rule2);border-radius:4px;padding:.65rem .8rem;margin-bottom:.8rem}
+.fieldset > h4{font-size:.78rem;color:var(--ink2);margin-bottom:.45rem}
+
+/* ---------- hta ---------- */
+.hta-row{display:flex;align-items:flex-start;gap:.5rem;padding:.35rem .5rem;border-bottom:1px solid var(--rule2);background:var(--paper)}
+.hta-row:hover{background:var(--field2)}
+.hta-num{font-family:var(--mono);font-size:.8rem;color:var(--duty-dk);min-width:3.2rem;padding-top:.35rem}
+.hta-txt{flex:1}
+.hta-txt input{border-color:transparent;background:transparent}
+.hta-txt input:focus{border-color:var(--rule);background:var(--paper)}
+.hta-ctl{display:flex;gap:.2rem;padding-top:.2rem}
+.lvl1{padding-left:1.6rem}.lvl2{padding-left:3.2rem}
+
+/* ---------- dashboard ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin-bottom:1rem}
+.stat{background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:.7rem .85rem}
+.stat b{display:block;font-size:1.6rem;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:.76rem;color:var(--ink2)}
+.bar{height:8px;background:var(--field);border-radius:2px;overflow:hidden;display:flex;margin-top:.4rem}
+.bar i{display:block;height:100%}
+.checklist li{margin-bottom:.4rem;list-style:none}
+.checklist{padding:0;margin:0}
+.checklist label{display:flex;gap:.5rem;align-items:flex-start;font-size:.86rem;cursor:pointer}
+.checklist input{margin-top:.25rem}
+
+.notice{border-left:3px solid var(--duty);background:var(--duty-tint);padding:.6rem .8rem;border-radius:0 3px 3px 0;font-size:.85rem;margin-bottom:1rem}
+.toast{position:fixed;bottom:1.1rem;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:.55rem 1rem;border-radius:4px;font-size:.85rem;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .18s}
+.toast.on{opacity:1}
+
+@media (max-width:860px){
+  .shell{flex-direction:column}
+  .spine{width:100%;flex:none;position:static;border-right:0;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;padding:.4rem}
+  .spine h2,.spine hr{display:none}
+  .spine a{border-left:0;border-bottom:3px solid transparent;padding:.4rem .6rem}
+  .spine a.on{border-left:0;border-bottom-color:var(--duty)}
+  .spine .count{display:none}
+  .surface{padding:1rem}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .tb-fields{display:none}
+}
+
+/* ---------- print ---------- */
+@media print{
+  body{background:#fff;font-size:10.5pt}
+  .spine,.tb-actions,.toolbar,.row-actions,.no-print{display:none !important}
+  .titleblock{color:#000;background:#fff;border-bottom:2px solid #000}
+  .tb-mark{border-right:1px solid #999}
+  .tb-f label{color:#555}
+  .shell{display:block}
+  .surface{padding:0}
+  .panel{display:block !important;page-break-after:always;max-width:none}
+  .panel:last-child{page-break-after:auto}
+  .card,.tbl,.tbl td,.tbl th{border-color:#999 !important}
+  .tbl th{background:#eee !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pill{border:1px solid #999}
+  a{color:#000;text-decoration:none}
+}
+</style>
+</head>
+<body>
+
+<header class="titleblock">
+  <div class="tb-mark">
+    <strong>SCTA Workbench</strong>
+    <span>Safety critical task analysis</span>
+  </div>
+  <div class="tb-fields">
+    <div class="tb-f"><label>Study ref</label><div class="v" id="tbRef">—</div></div>
+    <div class="tb-f"><label>Site / facility</label><div class="v" id="tbSite">—</div></div>
+    <div class="tb-f"><label>Lead analyst</label><div class="v" id="tbLead">—</div></div>
+    <div class="tb-f"><label>Rev</label><div class="v" id="tbRev">—</div></div>
+    <div class="tb-f"><label>Date</label><div class="v" id="tbDate">—</div></div>
+    <div class="tb-f" id="tbFileWrap" hidden><label>Linked file</label><div class="v" id="tbFile">—</div></div>
+  </div>
+  <div class="tb-actions no-print">
+    <button id="btnExample" title="Load a worked example">Example</button>
+    <button id="btnOpen">Open…</button>
+    <button id="btnSaveAs" hidden>Save as…</button>
+    <button id="btnPrint">Print / PDF</button>
+    <button id="btnSave" class="primary">Save file</button>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="spine no-print">
+    <h2>Study</h2>
+    <a href="#setup" data-p="setup"><span class="n">0</span> Study setup</a>
+    <h2>Analysis</h2>
+    <a href="#hazards" data-p="hazards"><span class="n">1</span> Major hazards <span class="count" id="cHaz"></span></a>
+    <a href="#tasks" data-p="tasks"><span class="n">2</span> Critical tasks <span class="count" id="cTask"></span></a>
+    <a href="#evidence" data-p="evidence"><span class="n">3</span> Task evidence <span class="count" id="cEvid"></span></a>
+    <a href="#breakdown" data-p="breakdown"><span class="n">4</span> Task breakdown <span class="count" id="cStep"></span></a>
+    <a href="#worksheet" data-p="worksheet"><span class="n">5</span> Failures and PIFs <span class="count" id="cFail"></span></a>
+    <a href="#measures" data-p="measures"><span class="n">6</span> Safety measures <span class="count" id="cMeas"></span></a>
+    <a href="#review" data-p="review"><span class="n">7</span> Review</a>
+    <hr>
+    <h2>Output</h2>
+    <a href="#actions" data-p="actions"><span class="n">›</span> Action register <span class="count" id="cAct"></span></a>
+    <a href="#guide" data-p="guide"><span class="n">?</span> How to use</a>
+  </nav>
+
+  <main class="surface">
+
+  <!-- ============ SETUP ============ -->
+  <section class="panel" id="p-setup">
+    <div class="phead"><h1>Study setup</h1>
+      <p class="lede">Record who is doing the study and what it covers. These details appear on every printed page.</p></div>
+    <div class="card">
+      <div class="grid g3">
+        <div><label class="fl" for="m_ref">Study reference</label><input type="text" id="m_ref" placeholder="SCTA-2026-001"></div>
+        <div><label class="fl" for="m_rev">Revision</label><input type="text" id="m_rev" placeholder="0"></div>
+        <div><label class="fl" for="m_date">Date</label><input type="date" id="m_date"></div>
+        <div><label class="fl" for="m_site">Site</label><input type="text" id="m_site" placeholder="Offshore platform / terminal / plant"></div>
+        <div><label class="fl" for="m_fac">Facility or unit</label><input type="text" id="m_fac" placeholder="Wellhead area, gas compression, loading jetty"></div>
+        <div><label class="fl" for="m_lead">Lead analyst</label><input type="text" id="m_lead" placeholder="Name and role"></div>
+      </div>
+      <div class="grid g2" style="margin-top:.75rem">
+        <div><label class="fl" for="m_team">Study team</label><textarea id="m_team" placeholder="One per line: name — role. Include operations, maintenance, engineering and a person who does the task."></textarea></div>
+        <div><label class="fl" for="m_scope">Scope and boundaries</label><textarea id="m_scope" placeholder="What this study covers, what it excludes, and which documents it draws on."></textarea></div>
+      </div>
+    </div>
+    <div class="card" id="cloudCard">
+      <h3>Where the study is saved</h3>
+      <p id="cloudState" class="hint" style="margin-bottom:.6rem"></p>
+      <div class="toolbar no-print" style="margin-bottom:.4rem">
+        <button class="btn primary" id="lnkFile">Link to a file…</button>
+        <button class="btn" id="unlinkFile" hidden>Unlink</button>
+        <label style="display:flex;gap:.4rem;align-items:center;font-size:.85rem" id="autoWrap" hidden>
+          <input type="checkbox" id="autoSave"> Save to the file automatically
+        </label>
+      </div>
+      <p class="hint">Choose a file inside your OneDrive, SharePoint or Google Drive folder and the study is written straight into it. Your sync client uploads it like any other document, so the file keeps your company's access control, version history and backup. Nothing is sent to this tool.</p>
+    </div>
+    <div class="notice">Everything you enter stays in this browser until you save it. Nothing is uploaded by the tool itself.</div>
+  </section>
+
+  <!-- ============ HAZARDS ============ -->
+  <section class="panel" id="p-hazards">
+    <div class="phead"><span class="step-tag">Step 1</span><h1>Major accident hazards</h1>
+      <p class="lede">List the hazards this study is protecting against. Take them from the safety case, HAZOP, bow tie or risk register rather than inventing new ones.</p></div>
+    <div class="toolbar no-print"><button class="btn primary" id="addHaz">Add hazard</button><div class="spacer"></div>
+      <span class="hint">Tasks in Step 2 are linked back to these hazards.</span></div>
+    <div class="wrap"><table class="tbl" id="tHaz"></table></div>
+  </section>
+
+  <!-- ============ TASKS ============ -->
+  <section class="panel" id="p-tasks">
+    <div class="phead"><span class="step-tag">Step 2</span><h1>Safety critical tasks</h1>
+      <p class="lede">A task is safety critical if doing it badly could start, worsen or fail to stop one of the hazards above. Include checking, communication and decision tasks, not only hands-on operations.</p></div>
+    <div class="toolbar no-print"><button class="btn primary" id="addTask">Add task</button>
+      <select id="fPri" style="width:auto"><option value="">All priorities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+      <div class="spacer"></div><span class="hint">Priority = consequence + reliance on the person + how often the task is done.</span></div>
+    <div class="wrap"><table class="tbl" id="tTask"></table></div>
+  </section>
+
+  <!-- ============ EVIDENCE ============ -->
+  <section class="panel" id="p-evidence">
+    <div class="phead"><span class="step-tag">Step 3</span><h1>Task evidence</h1>
+      <p class="lede">Record how you found out what really happens. A study built only on reading procedures will miss the workarounds that matter.</p></div>
+    <div class="wrap"><table class="tbl" id="tEvid"></table></div>
+  </section>
+
+  <!-- ============ BREAKDOWN ============ -->
+  <section class="panel" id="p-breakdown">
+    <div class="phead"><span class="step-tag">Step 4</span><h1>Task breakdown</h1>
+      <p class="lede">Break each task into the steps a person actually carries out. Use sub-steps where a step has parts worth analysing separately.</p></div>
+    <div class="toolbar no-print">
+      <label class="fl" for="selBTask" style="margin:0">Task</label>
+      <select id="selBTask" style="width:auto;min-width:280px"></select>
+      <button class="btn" id="addStep">Add step</button>
+      <div class="spacer"></div><span class="hint">Tab through the text boxes; changes save as you type.</span>
+    </div>
+    <div class="card" id="htaBox" style="padding:0"></div>
+  </section>
+
+  <!-- ============ WORKSHEET ============ -->
+  <section class="panel" id="p-worksheet">
+    <div class="phead"><span class="step-tag">Step 5</span><h1>Human failures and influencing factors</h1>
+      <p class="lede">For each step, ask what could go wrong with it. Use the prompts to stay systematic, then note the conditions that make the failure more likely.</p></div>
+    <div class="toolbar no-print">
+      <label class="fl" for="selWTask" style="margin:0">Task</label>
+      <select id="selWTask" style="width:auto;min-width:280px"></select>
+      <button class="btn primary" id="addFail">Add failure</button>
+      <div class="spacer"></div>
+      <button class="btn" id="expWs">Export worksheet (CSV)</button>
+    </div>
+    <div class="wrap"><table class="tbl" id="tWork"></table></div>
+  </section>
+
+  <!-- ============ MEASURES ============ -->
+  <section class="panel" id="p-measures">
+    <div class="phead"><span class="step-tag">Step 6</span><h1>Safety measures</h1>
+      <p class="lede">Work down the list in order. Removing the hazard or the need for the person beats writing another procedure. If most of your measures sit at level 5, the study is not finished.</p></div>
+    <div class="stats" id="hierStats"></div>
+    <div class="wrap"><table class="tbl" id="tMeas"></table></div>
+  </section>
+
+  <!-- ============ REVIEW ============ -->
+  <section class="panel" id="p-review">
+    <div class="phead"><span class="step-tag">Step 7</span><h1>Review</h1>
+      <p class="lede">Check the study against the marks of a sound analysis before you issue it.</p></div>
+    <div class="stats" id="revStats"></div>
+    <div class="grid g2">
+      <div class="card"><h3>Quality check</h3><ul class="checklist" id="qc"></ul></div>
+      <div class="card"><h3>Gaps found automatically</h3><div id="autoGaps"></div></div>
+    </div>
+    <div class="card"><h3>Reviewer notes and close-out</h3>
+      <textarea id="m_review" placeholder="Who reviewed the study, what was agreed, and when the actions will be audited."></textarea></div>
+  </section>
+
+  <!-- ============ ACTIONS ============ -->
+  <section class="panel" id="p-actions">
+    <div class="phead"><h1>Action register</h1>
+      <p class="lede">Every measure with an owner, gathered in one place. Track these like any other safety action.</p></div>
+    <div class="toolbar no-print">
+      <select id="fStatus" style="width:auto"><option value="">All statuses</option><option>Open</option><option>In progress</option><option>Closed</option></select>
+      <div class="spacer"></div><button class="btn" id="expAct">Export actions (CSV)</button>
+    </div>
+    <div class="wrap"><table class="tbl" id="tAct"></table></div>
+  </section>
+
+  <!-- ============ GUIDE ============ -->
+  <section class="panel" id="p-guide">
+    <div class="phead"><h1>How to use this workbench</h1>
+      <p class="lede">The seven steps follow the standard approach to human factors safety critical task analysis used across the energy industry.</p></div>
+    <div class="grid g2">
+      <div class="card"><h3>The method in short</h3>
+        <p><strong>1. Major hazards.</strong> Start from the hazards already identified for the facility. If a task has no route to one of them, it does not belong in this study.</p>
+        <p><strong>2. Critical tasks.</strong> Look for tasks that open the system up, that maintain a protective system and could leave it disabled, or that create the very condition a protective system guards against. Include checks, handovers and decisions.</p>
+        <p><strong>3. Evidence.</strong> Read the procedure, then watch the task and talk to the people who do it. Differences between the two are usually where the risk lives.</p>
+        <p><strong>4. Breakdown.</strong> Set out the steps in order. Two levels is usually enough.</p>
+        <p><strong>5. Failures and influencing factors.</strong> Apply the prompts to each step, then record the workplace, equipment, procedural, organisational and personal conditions that make each failure more likely.</p>
+        <p><strong>6. Safety measures.</strong> Choose controls from the top of the hierarchy down, and check the control actually suits the type of failure.</p>
+        <p><strong>7. Review.</strong> Benchmark the study, close the gaps, and put the actions into your normal tracking system.</p>
+      </div>
+      <div class="card"><h3>Matching the measure to the failure</h3>
+        <p>The type of failure decides what will work:</p>
+        <p><strong>Slip</strong> — the right intention, the wrong action. Better labelling, layout and fewer distractions help. More training rarely does.</p>
+        <p><strong>Lapse</strong> — a step forgotten. Checklists, prompts and place-keeping help.</p>
+        <p><strong>Mistake</strong> — the action was carried out as intended, but the intention was wrong. Procedures, decision aids, training and competence help.</p>
+        <p><strong>Violation</strong> — a deliberate departure from the rule. Look at why: supervision, workload, whether the rule is workable, and whether the correct method is the easiest one.</p>
+        <h3 style="margin-top:1rem">Hierarchy of measures</h3>
+        <p>1 Remove the hazard · 2 Remove the human contribution · 3 Prevent or limit the consequence with an engineered barrier · 4 Assure performance mechanically or electrically, for example an interlock · 5 Improve the conditions the person works under.</p>
+      </div>
+    </div>
+    <div class="card"><h3>Saving your work</h3>
+      <p>The study is kept in this browser as you type, so it survives a refresh on the same machine. Use <strong>Save file</strong> for a copy you can archive, email or reopen on another computer, and <strong>Open…</strong> to load it back. <strong>Print / PDF</strong> produces the full study as a report.</p></div>
+  </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ DIALOGS ============ -->
+<dialog id="dHaz"><form method="dialog">
+  <div class="dlg-head"><h3>Major accident hazard</h3><button class="btn sm" value="cancel">Close</button></div>
+  <div class="dlg-body">
+    <div class="grid g3">
+      <div><label class="fl">Reference</label><input type="text" id="h_ref" placeholder="MAH-01"></div>
+      <div style="grid-column:span 2"><label class="fl">Hazard</label><input type="text" id="h_title" placeholder="Loss of containment from wellhead flowline"></div>
+    </div>
+    <div class="grid g2" style="margin-top:.7rem">
+      <div><label class="fl">Where it came from</label><input type="text" id="h_src" placeholder="Safety case s.4.2 / HAZOP node 6 / bow tie BT-03"></div>
+      <div><label class="fl">Worst credible outcome</label><input type="text" id="h_cons" placeholder="Jet fire at the wellhead deck, multiple fatalities"></div>
+    </div>
+    <div style="margin-top:.7rem"><label class="fl">Description</label><textarea id="h_desc"></textarea></div>
+  </div>
+  <div class="dlg-foot"><button class="btn danger" id="h_del" value="delete" type="button">Delete</button><button class="btn" value="cancel">Cancel</button><button class="btn primary" id="h_save" value="save" type="button">Save hazard</button></div>
+</form></dialog>
+
+<dialog id="dTask"><form method="dialog">
+  <div class="dlg-head"><h3>Safety critical task</h3><button class="btn sm" value="cancel">Close</button></div>
+  <div class="dlg-body">
+    <div class="grid g3">
+      <div><label class="fl">Reference</label><input type="text" id="t_ref" placeholder="SCT-01"></div>
+      <div style="grid-column:span 2"><label class="fl">Task</label><input type="text" id="t_title" placeholder="Respond to a rise in sand production on a gas-lifted well"></div>
+    </div>
+    <div class="grid g3" style="margin-top:.7rem">
+      <div><label class="fl">Type of task</label><select id="t_cat"></select></div>
+      <div><label class="fl">Who does it</label><input type="text" id="t_role" placeholder="Senior production operator"></div>
+      <div><label class="fl">Procedure reference</label><input type="text" id="t_proc" placeholder="Document number, or 'none'"></div>
+    </div>
+    <div class="fieldset" style="margin-top:.8rem"><h4>Hazards this task can affect</h4><div class="chips" id="t_haz"></div></div>
+    <div class="fieldset"><h4>Screening</h4>
+      <div class="grid g3">
+        <div><label class="fl">If the task fails, how bad is it?</label><select id="t_sev"></select></div>
+        <div><label class="fl">How much does the outcome rely on the person?</label><select id="t_rel"></select></div>
+        <div><label class="fl">How often is the task done?</label><select id="t_frq"></select></div>
+      </div>
+      <p class="hint" id="t_score"></p>
+    </div>
+    <div><label class="fl">Notes</label><textarea id="t_notes"></textarea></div>
+  </div>
+  <div class="dlg-foot"><button class="btn danger" id="t_del" value="delete" type="button">Delete</button><button class="btn" value="cancel">Cancel</button><button class="btn primary" id="t_save" value="save" type="button">Save task</button></div>
+</form></dialog>
+
+<dialog id="dFail"><form method="dialog">
+  <div class="dlg-head"><h3>Potential human failure</h3><button class="btn sm" value="cancel">Close</button></div>
+  <div class="dlg-body">
+    <div class="grid g2">
+      <div><label class="fl">Task step</label><select id="f_step"></select></div>
+      <div><label class="fl">Failure type</label><select id="f_type"></select></div>
+    </div>
+    <div class="fieldset" style="margin-top:.8rem"><h4>What could go wrong — pick the prompts that fit</h4><div class="chips" id="f_gw"></div></div>
+    <div><label class="fl">Describe the failure</label><textarea id="f_desc" placeholder="The operator records the sand result but does not pass it to the integrity team."></textarea></div>
+    <div class="grid g2" style="margin-top:.7rem">
+      <div><label class="fl">Consequence if it happens</label><textarea id="f_cons"></textarea></div>
+      <div><label class="fl">Existing controls</label><textarea id="f_safe"></textarea></div>
+    </div>
+    <div class="fieldset" style="margin-top:.8rem"><h4>Conditions that make it more likely</h4><div class="chips" id="f_pif"></div></div>
+    <div class="grid g3">
+      <div><label class="fl">Severity (1–5)</label><select id="f_sev"></select></div>
+      <div><label class="fl">Likelihood (1–5)</label><select id="f_lik"></select></div>
+      <div><label class="fl">Risk</label><div id="f_risk" style="padding-top:.45rem"></div></div>
+    </div>
+    <div class="fieldset" style="margin-top:.8rem">
+      <h4>Additional measures</h4>
+      <div id="f_meas"></div>
+      <button class="btn sm" id="f_addm" type="button">Add measure</button>
+    </div>
+  </div>
+  <div class="dlg-foot"><button class="btn danger" id="f_del" value="delete" type="button">Delete</button><button class="btn" value="cancel">Cancel</button><button class="btn primary" id="f_save" value="save" type="button">Save failure</button></div>
+</form></dialog>
+
+<script>
+"use strict";
+/* ============================================================
+   SCTA Workbench — single file, no dependencies
+   ============================================================ */
+
+const KEY = "scta.workbench.v1";
+const uid = p => p + "-" + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ---------- reference data (plain-language taxonomy) ---------- */
+const TASK_CATS = [
+  "Routine operations", "Non-routine operations", "Start-up or shutdown",
+  "Maintenance preparation and isolation", "Maintenance and repair",
+  "Testing or reinstating a protective system", "Inspection and monitoring",
+  "Communication or handover", "Decision or assessment", "Emergency response",
+  "Management of change", "Management or tracking"
+];
+
+const GUIDEWORDS = [
+  { g:"Action", items:[
+    ["A1","Done for too long or too short a time"],["A2","Done at the wrong moment"],
+    ["A3","Moved or turned the wrong way"],["A4","Too much or too little"],
+    ["A5","Done too quickly or too slowly"],["A6","Not lined up correctly"],
+    ["A7","Right action on the wrong item"],["A8","Wrong action on the right item"],
+    ["A9","Action not done at all"],["A10","Action only part done"],
+    ["A11","Done too early or too late"],["A12","Done out of sequence"],
+    ["A13","Item left in the wrong place"]]},
+  { g:"Checking", items:[
+    ["C1","Check not done"],["C2","Check not completed"],
+    ["C3","Right check on the wrong item"],["C4","Wrong check on the right item"],
+    ["C5","Check done too early or too late"]]},
+  { g:"Selection", items:[["S1","Nothing selected"],["S2","Wrong thing selected"]]},
+  { g:"Finding information", items:[
+    ["R1","Information not obtained"],["R2","Wrong information obtained"],
+    ["R3","Only part of the information obtained"],["R4","Information read the wrong way"]]},
+  { g:"Passing information on", items:[
+    ["I1","Not passed on"],["I2","Wrong information passed on"],
+    ["I3","Only part of it passed on"],["I4","Passed on but unclear"]]},
+  { g:"Planning", items:[["P1","No plan made"],["P2","Plan was wrong for the situation"]]},
+  { g:"Departure from the rule", items:[["V1","Rule knowingly not followed"]]}
+];
+
+const PIFS = [
+  { g:"Workplace", items:["Access to the equipment","Lighting, noise or weather","Housekeeping and clutter","Working at height or in a confined space"]},
+  { g:"Equipment", items:["Equipment not available when needed","Design, labelling or layout","Position of the equipment","Condition and maintenance","Information shown by instruments","No measurement available"]},
+  { g:"Procedures", items:["Procedure not available at the job","Procedure out of date or wrong","Procedure hard to follow","People use a different method in practice","Permit or isolation controls","No procedure exists for this task"]},
+  { g:"Organisation", items:["Supervision","Training and competence","Refresher training","Recent experience of this task","Communication between teams or departments","Who is responsible is unclear","Management of change","Staffing levels","Handover between shifts","Action tracking and follow-up"]},
+  { g:"The person", items:["Fatigue or shift pattern","Distractions","Doing several tasks at once","Time or production pressure","Task rarely done"]}
+];
+
+const FAILTYPES = ["Slip — right intention, wrong action","Lapse — a step forgotten","Mistake — wrong intention","Violation — rule knowingly not followed"];
+
+const HIER = [
+  { v:1, t:"1 — Remove the hazard" },
+  { v:2, t:"2 — Remove the human contribution (automate)" },
+  { v:3, t:"3 — Prevent or limit the consequence (engineered barrier)" },
+  { v:4, t:"4 — Assure performance mechanically or electrically" },
+  { v:5, t:"5 — Improve the conditions the person works under" }
+];
+
+const SEV_OPTS = [
+  [1,"1 — Minor, contained on the spot"],[2,"2 — Local damage or a reportable event"],
+  [3,"3 — Loss of containment, no escalation"],[4,"4 — Serious injury or major loss"]
+];
+const REL_OPTS = [
+  [1,"1 — Automatic systems do the work"],[2,"2 — Strong engineered back-up"],
+  [3,"3 — One back-up, mostly the person"],[4,"4 — The person is the only barrier"]
+];
+const FRQ_OPTS = [
+  [1,"1 — Rarely, and always planned"],[2,"2 — A few times a year"],
+  [3,"3 — Monthly or weekly"],[4,"4 — Daily, or at short notice"]
+];
+
+const QCHECKS = [
+  "Tasks were chosen because they link to a named hazard or a past incident, not because a procedure exists.",
+  "People who actually do the tasks took part, and at least one task was watched being done.",
+  "Non-routine, maintenance and communication tasks are covered, not only routine operations.",
+  "Past incidents at this site and in the industry were reviewed for the tasks involved.",
+  "Departures from the rule were considered honestly, not assumed away.",
+  "Influencing factors are recorded and each one is answered by a measure.",
+  "Measures were chosen from the top of the hierarchy down, not straight to training and procedures.",
+  "Each measure suits the type of failure it addresses.",
+  "Where a measure was considered and rejected, the reason is written down.",
+  "The actions have owners and dates and sit in the site tracking system."
+];
+
+/* ---------- state ---------- */
+let S = blank();
+function blank(){
+  return { meta:{ref:"",rev:"0",date:new Date().toISOString().slice(0,10),site:"",fac:"",lead:"",team:"",scope:"",review:""},
+    hazards:[], tasks:[], steps:[], fails:[], qc:[] };
+}
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  dirty = true;
+  if(typeof paintCloud === "function" && document.getElementById("cloudState")) paintCloud();
+}
+function load(){ try{ const r = localStorage.getItem(KEY); if(r) S = Object.assign(blank(), JSON.parse(r)); }catch(e){} }
+
+function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),2000); }
+
+/* ---------- scoring ---------- */
+function taskPriority(t){
+  const s = (+t.sev||0)+(+t.rel||0)+(+t.frq||0);
+  if(!t.sev||!t.rel||!t.frq) return {score:s, band:"Not screened", cls:"p-low"};
+  if(s>=11) return {score:s, band:"Critical", cls:"p-crit"};
+  if(s>=9)  return {score:s, band:"High", cls:"p-high"};
+  if(s>=6)  return {score:s, band:"Medium", cls:"p-med"};
+  return {score:s, band:"Low", cls:"p-low"};
+}
+function riskBand(sev,lik){
+  const n = (+sev||0)*(+lik||0);
+  if(!n) return {n:0, band:"—", cls:"p-low"};
+  if(n>=17) return {n, band:"Very high", cls:"p-crit"};
+  if(n>=10) return {n, band:"High", cls:"p-crit"};
+  if(n>=5)  return {n, band:"Medium", cls:"p-high"};
+  return {n, band:"Low", cls:"p-med"};
+}
+function stepNumbers(taskId){
+  const rows = S.steps.filter(s=>s.taskId===taskId);
+  let a=0,b=0,c=0; const out=[];
+  rows.forEach(s=>{
+    if(s.lvl===0){a++;b=0;c=0;out.push(String(a));}
+    else if(s.lvl===1){b++;c=0;out.push(a+"."+b);}
+    else {c++;out.push(a+"."+b+"."+c);}
+  });
+  return out;
+}
+function stepLabel(id){
+  const st = S.steps.find(x=>x.id===id); if(!st) return "—";
+  const rows = S.steps.filter(s=>s.taskId===st.taskId);
+  const nums = stepNumbers(st.taskId);
+  const i = rows.findIndex(r=>r.id===id);
+  return (nums[i]||"") + " " + (st.text||"");
+}
+
+/* ---------- navigation ---------- */
+const PANELS = ["setup","hazards","tasks","evidence","breakdown","worksheet","measures","review","actions","guide"];
+let current = "setup";
+
+/* Writing to the address bar fails when the page is embedded in a sandboxed
+   frame (about:srcdoc). The tool does not depend on it, so it is optional. */
+function setHash(p){
+  try{
+    if(window.top === window.self && location.hash.slice(1) !== p){
+      history.replaceState(null, "", "#" + p);
+    }
+  }catch(e){ /* embedded or restricted context — navigation still works */ }
+}
+function readHash(){
+  try{
+    const h = (location.hash || "").replace(/^#/, "");
+    return PANELS.includes(h) ? h : "";
+  }catch(e){ return ""; }
+}
+function show(p){
+  if(!PANELS.includes(p)) p = "setup";
+  current = p;
+  document.querySelectorAll(".panel").forEach(el=>el.classList.remove("on"));
+  document.querySelectorAll(".spine a").forEach(a=>a.classList.toggle("on", a.dataset.p===p));
+  const el = document.getElementById("p-"+p); if(el) el.classList.add("on");
+  setHash(p);
+  render();
+}
+document.querySelectorAll(".spine a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();show(a.dataset.p);}));
+
+/* ---------- meta binding ---------- */
+const metaMap = {m_ref:"ref",m_rev:"rev",m_date:"date",m_site:"site",m_fac:"fac",m_lead:"lead",m_team:"team",m_scope:"scope",m_review:"review"};
+Object.keys(metaMap).forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener("input",()=>{ S.meta[metaMap[id]] = el.value; save(); paintTitle(); });
+});
+function paintMeta(){ Object.keys(metaMap).forEach(id=>{ document.getElementById(id).value = S.meta[metaMap[id]]||""; }); }
+function paintTitle(){
+  document.getElementById("tbRef").textContent = S.meta.ref||"—";
+  document.getElementById("tbSite").textContent = [S.meta.site,S.meta.fac].filter(Boolean).join(" · ")||"—";
+  document.getElementById("tbLead").textContent = S.meta.lead||"—";
+  document.getElementById("tbRev").textContent = S.meta.rev||"—";
+  document.getElementById("tbDate").textContent = S.meta.date||"—";
+}
+
+/* ============================================================
+   STEP 1 — HAZARDS
+   ============================================================ */
+const dHaz = document.getElementById("dHaz"); let editHaz = null;
+document.getElementById("addHaz").addEventListener("click",()=>openHaz(null));
+function openHaz(h){
+  editHaz = h;
+  document.getElementById("h_ref").value = h? h.ref : "MAH-"+String(S.hazards.length+1).padStart(2,"0");
+  document.getElementById("h_title").value = h? h.title : "";
+  document.getElementById("h_src").value = h? h.src : "";
+  document.getElementById("h_cons").value = h? h.cons : "";
+  document.getElementById("h_desc").value = h? h.desc : "";
+  document.getElementById("h_del").style.display = h? "" : "none";
+  dHaz.showModal();
+}
+document.getElementById("h_save").addEventListener("click",()=>{
+  const o = { ref:val("h_ref"), title:val("h_title"), src:val("h_src"), cons:val("h_cons"), desc:val("h_desc") };
+  if(!o.title){ toast("Give the hazard a name."); return; }
+  if(editHaz) Object.assign(editHaz,o); else S.hazards.push(Object.assign({id:uid("haz")},o));
+  save(); dHaz.close(); render(); toast("Hazard saved.");
+});
+document.getElementById("h_del").addEventListener("click",()=>{
+  if(!editHaz) return;
+  if(!confirm("Delete this hazard? Tasks linked to it will keep their other links.")) return;
+  S.hazards = S.hazards.filter(x=>x!==editHaz);
+  S.tasks.forEach(t=>t.hazIds=(t.hazIds||[]).filter(i=>i!==editHaz.id));
+  save(); dHaz.close(); render(); toast("Hazard deleted.");
+});
+function renderHaz(){
+  if(!S.hazards.length){ document.getElementById("p-hazards").querySelector(".wrap").innerHTML =
+    `<div class="empty"><p>No hazards yet. Add the major accident hazards for this facility — pipeline or vessel failure, overfill, dropped load, loss of containment, and so on.</p><button class="btn primary" onclick="document.getElementById('addHaz').click()">Add the first hazard</button></div>`;
+    return; }
+  document.getElementById("p-hazards").querySelector(".wrap").innerHTML = '<table class="tbl" id="tHaz"></table>';
+  const tb = document.getElementById("tHaz");
+  tb.innerHTML = `<thead><tr><th style="width:5rem">Ref</th><th>Hazard</th><th style="width:16rem">Worst credible outcome</th><th style="width:12rem">Source</th><th style="width:5rem">Tasks</th><th class="no-print" style="width:5rem"></th></tr></thead><tbody>`+
+  S.hazards.map(h=>{
+    const n = S.tasks.filter(t=>(t.hazIds||[]).includes(h.id)).length;
+    return `<tr><td class="ref">${esc(h.ref)}</td><td><strong>${esc(h.title)}</strong>${h.desc?`<div class="hint">${esc(h.desc)}</div>`:""}</td>
+    <td>${esc(h.cons)}</td><td class="hint">${esc(h.src)}</td><td class="num">${n}</td>
+    <td class="no-print"><div class="row-actions"><button class="btn sm" data-eh="${h.id}">Edit</button></div></td></tr>`;
+  }).join("")+`</tbody>`;
+  tb.querySelectorAll("[data-eh]").forEach(b=>b.addEventListener("click",()=>openHaz(S.hazards.find(x=>x.id===b.dataset.eh))));
+}
+
+/* ============================================================
+   STEP 2 — TASKS
+   ============================================================ */
+const dTask = document.getElementById("dTask"); let editTask = null;
+fillSel("t_cat", TASK_CATS.map(c=>[c,c]));
+fillSel("t_sev", SEV_OPTS, true); fillSel("t_rel", REL_OPTS, true); fillSel("t_frq", FRQ_OPTS, true);
+["t_sev","t_rel","t_frq"].forEach(id=>document.getElementById(id).addEventListener("change",scorePreview));
+function scorePreview(){
+  const p = taskPriority({sev:val("t_sev"),rel:val("t_rel"),frq:val("t_frq")});
+  document.getElementById("t_score").textContent = p.band==="Not screened" ? "Choose all three to get a priority." : `Score ${p.score} of 12 — priority ${p.band.toLowerCase()}.`;
+}
+document.getElementById("addTask").addEventListener("click",()=>openTask(null));
+function openTask(t){
+  editTask = t;
+  document.getElementById("t_ref").value = t? t.ref : "SCT-"+String(S.tasks.length+1).padStart(2,"0");
+  document.getElementById("t_title").value = t? t.title : "";
+  document.getElementById("t_cat").value = t? t.cat : TASK_CATS[0];
+  document.getElementById("t_role").value = t? t.role : "";
+  document.getElementById("t_proc").value = t? t.proc : "";
+  document.getElementById("t_sev").value = t? (t.sev||"") : "";
+  document.getElementById("t_rel").value = t? (t.rel||"") : "";
+  document.getElementById("t_frq").value = t? (t.frq||"") : "";
+  document.getElementById("t_notes").value = t? t.notes : "";
+  const sel = t? (t.hazIds||[]) : [];
+  document.getElementById("t_haz").innerHTML = S.hazards.length ? S.hazards.map(h=>
+    `<button type="button" class="chip${sel.includes(h.id)?" on":""}" data-hz="${h.id}"><small>${esc(h.ref)}</small>${esc(h.title)}</button>`).join("")
+    : `<span class="hint">Add hazards in Step 1 first.</span>`;
+  document.getElementById("t_haz").querySelectorAll("[data-hz]").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("on")));
+  document.getElementById("t_del").style.display = t? "" : "none";
+  scorePreview(); dTask.showModal();
+}
+document.getElementById("t_save").addEventListener("click",()=>{
+  const hazIds = [...document.getElementById("t_haz").querySelectorAll(".chip.on")].map(b=>b.dataset.hz);
+  const o = { ref:val("t_ref"), title:val("t_title"), cat:val("t_cat"), role:val("t_role"), proc:val("t_proc"),
+    sev:val("t_sev"), rel:val("t_rel"), frq:val("t_frq"), notes:val("t_notes"), hazIds };
+  if(!o.title){ toast("Give the task a name."); return; }
+  if(editTask) Object.assign(editTask,o);
+  else S.tasks.push(Object.assign({id:uid("sct"), ev:{proc:false,intv:false,obs:false,walk:false}, evNotes:""},o));
+  save(); dTask.close(); render(); toast("Task saved.");
+});
+document.getElementById("t_del").addEventListener("click",()=>{
+  if(!editTask) return;
+  if(!confirm("Delete this task with its steps and failures?")) return;
+  S.steps = S.steps.filter(s=>s.taskId!==editTask.id);
+  S.fails = S.fails.filter(f=>f.taskId!==editTask.id);
+  S.tasks = S.tasks.filter(x=>x!==editTask);
+  save(); dTask.close(); render(); toast("Task deleted.");
+});
+function renderTasks(){
+  const box = document.getElementById("p-tasks").querySelector(".wrap");
+  if(!S.tasks.length){ box.innerHTML = `<div class="empty"><p>No tasks yet. Think about who touches this hazard: the person who opens the system up, the one who tests a trip, the one who passes a reading on, the one who decides whether to keep running.</p><button class="btn primary" onclick="document.getElementById('addTask').click()">Add the first task</button></div>`; return; }
+  const f = document.getElementById("fPri").value;
+  box.innerHTML = '<table class="tbl" id="tTask"></table>';
+  const tb = document.getElementById("tTask");
+  tb.innerHTML = `<thead><tr><th style="width:5rem">Ref</th><th>Task</th><th style="width:11rem">Type</th><th style="width:9rem">Who does it</th><th style="width:8rem">Hazards</th><th style="width:6rem">Priority</th><th style="width:4rem">Steps</th><th style="width:5rem">Failures</th><th class="no-print" style="width:5rem"></th></tr></thead><tbody>`+
+  S.tasks.filter(t=>!f||taskPriority(t).band===f).map(t=>{
+    const p = taskPriority(t);
+    const hz = (t.hazIds||[]).map(i=>{const h=S.hazards.find(x=>x.id===i);return h?esc(h.ref):"";}).filter(Boolean).join(", ");
+    return `<tr><td class="ref">${esc(t.ref)}</td>
+      <td><strong>${esc(t.title)}</strong>${t.proc?`<div class="hint">${esc(t.proc)}</div>`:""}</td>
+      <td>${esc(t.cat)}</td><td>${esc(t.role)}</td><td class="ref">${hz||'<span class="hint">none</span>'}</td>
+      <td><span class="pill ${p.cls}">${p.band}</span></td>
+      <td class="num">${S.steps.filter(s=>s.taskId===t.id).length}</td>
+      <td class="num">${S.fails.filter(x=>x.taskId===t.id).length}</td>
+      <td class="no-print"><div class="row-actions"><button class="btn sm" data-et="${t.id}">Edit</button></div></td></tr>`;
+  }).join("")+`</tbody>`;
+  tb.querySelectorAll("[data-et]").forEach(b=>b.addEventListener("click",()=>openTask(S.tasks.find(x=>x.id===b.dataset.et))));
+}
+document.getElementById("fPri").addEventListener("change",renderTasks);
+
+/* ============================================================
+   STEP 3 — EVIDENCE
+   ============================================================ */
+function renderEvid(){
+  const box = document.getElementById("p-evidence").querySelector(".wrap");
+  if(!S.tasks.length){ box.innerHTML = `<div class="empty"><p>Add tasks in Step 2 and they will appear here for you to record how each one was studied.</p></div>`; return; }
+  box.innerHTML = '<table class="tbl" id="tEvid"></table>';
+  const tb = document.getElementById("tEvid");
+  const cols = [["proc","Procedure read"],["intv","Person interviewed"],["obs","Task observed"],["walk","Walk-through or talk-through"]];
+  tb.innerHTML = `<thead><tr><th style="width:5rem">Ref</th><th>Task</th>${cols.map(c=>`<th style="width:7rem">${c[1]}</th>`).join("")}<th>Who was consulted, and what differs from the procedure</th></tr></thead><tbody>`+
+  S.tasks.map(t=>{
+    t.ev = t.ev||{};
+    return `<tr><td class="ref">${esc(t.ref)}</td><td>${esc(t.title)}</td>`+
+    cols.map(c=>`<td class="num"><input type="checkbox" data-ev="${t.id}" data-k="${c[0]}" ${t.ev[c[0]]?"checked":""}></td>`).join("")+
+    `<td><input type="text" data-evn="${t.id}" value="${esc(t.evNotes||"")}" placeholder="e.g. two operators interviewed; in practice the check is done from the walkway"></td></tr>`;
+  }).join("")+`</tbody>`;
+  tb.querySelectorAll("[data-ev]").forEach(c=>c.addEventListener("change",()=>{
+    const t = S.tasks.find(x=>x.id===c.dataset.ev); t.ev[c.dataset.k]=c.checked; save(); paintCounts();
+  }));
+  tb.querySelectorAll("[data-evn]").forEach(i=>i.addEventListener("input",()=>{
+    S.tasks.find(x=>x.id===i.dataset.evn).evNotes = i.value; save();
+  }));
+}
+
+/* ============================================================
+   STEP 4 — BREAKDOWN
+   ============================================================ */
+function taskOptions(sel){
+  const el = document.getElementById(sel);
+  const cur = el.value;
+  el.innerHTML = S.tasks.map(t=>`<option value="${t.id}">${esc(t.ref)} — ${esc(t.title)}</option>`).join("");
+  if(cur && S.tasks.some(t=>t.id===cur)) el.value = cur;
+}
+document.getElementById("addStep").addEventListener("click",()=>{
+  const tid = document.getElementById("selBTask").value; if(!tid){ toast("Add a task first."); return; }
+  S.steps.push({id:uid("st"), taskId:tid, lvl:0, text:""}); save(); renderHTA();
+});
+document.getElementById("selBTask").addEventListener("change",renderHTA);
+function renderHTA(){
+  taskOptions("selBTask");
+  const tid = document.getElementById("selBTask").value;
+  const box = document.getElementById("htaBox");
+  if(!S.tasks.length){ box.innerHTML = `<div class="empty" style="border:0"><p>Add a task in Step 2 first.</p></div>`; return; }
+  const rows = S.steps.filter(s=>s.taskId===tid);
+  if(!rows.length){ box.innerHTML = `<div class="empty" style="border:0"><p>No steps yet for this task. Start with the main steps in the order they happen, then add sub-steps where a step is worth opening up.</p><button class="btn primary" onclick="document.getElementById('addStep').click()">Add the first step</button></div>`; return; }
+  const nums = stepNumbers(tid);
+  box.innerHTML = rows.map((s,i)=>`
+    <div class="hta-row lvl${s.lvl}">
+      <div class="hta-num">${nums[i]}</div>
+      <div class="hta-txt"><input type="text" data-sx="${s.id}" value="${esc(s.text)}" placeholder="What the person does at this step"></div>
+      <div class="hta-ctl no-print">
+        <button class="btn sm" data-mv="up" data-id="${s.id}" title="Move up">↑</button>
+        <button class="btn sm" data-mv="dn" data-id="${s.id}" title="Move down">↓</button>
+        <button class="btn sm" data-in="out" data-id="${s.id}" title="Promote">◄</button>
+        <button class="btn sm" data-in="in" data-id="${s.id}" title="Demote">►</button>
+        <button class="btn sm danger" data-del="${s.id}" title="Delete">✕</button>
+      </div></div>`).join("");
+  box.querySelectorAll("[data-sx]").forEach(i=>i.addEventListener("input",()=>{
+    S.steps.find(s=>s.id===i.dataset.sx).text = i.value; save();
+  }));
+  box.querySelectorAll("[data-mv]").forEach(b=>b.addEventListener("click",()=>{
+    const all = S.steps, idx = all.findIndex(s=>s.id===b.dataset.id);
+    const dir = b.dataset.mv==="up"? -1 : 1;
+    const sameTask = i=> all[i] && all[i].taskId===all[idx].taskId;
+    const j = idx+dir; if(!sameTask(j)) return;
+    [all[idx],all[j]] = [all[j],all[idx]]; save(); renderHTA();
+  }));
+  box.querySelectorAll("[data-in]").forEach(b=>b.addEventListener("click",()=>{
+    const s = S.steps.find(x=>x.id===b.dataset.id);
+    s.lvl = b.dataset.in==="in" ? Math.min(2,s.lvl+1) : Math.max(0,s.lvl-1);
+    save(); renderHTA();
+  }));
+  box.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",()=>{
+    const n = S.fails.filter(f=>f.stepId===b.dataset.del).length;
+    if(n && !confirm(`This step has ${n} failure(s) recorded. Delete the step and its failures?`)) return;
+    S.fails = S.fails.filter(f=>f.stepId!==b.dataset.del);
+    S.steps = S.steps.filter(x=>x.id!==b.dataset.del); save(); renderHTA(); paintCounts();
+  }));
+}
+
+/* ============================================================
+   STEP 5 — FAILURES
+   ============================================================ */
+const dFail = document.getElementById("dFail"); let editFail = null, measDraft = [];
+fillSel("f_type", FAILTYPES.map(x=>[x,x]));
+fillSel("f_sev", [1,2,3,4,5].map(n=>[n,String(n)]), true);
+fillSel("f_lik", [1,2,3,4,5].map(n=>[n,String(n)]), true);
+["f_sev","f_lik"].forEach(id=>document.getElementById(id).addEventListener("change",riskPreview));
+function riskPreview(){
+  const r = riskBand(val("f_sev"),val("f_lik"));
+  document.getElementById("f_risk").innerHTML = `<span class="pill ${r.cls}">${r.band}${r.n?" ("+r.n+")":""}</span>`;
+}
+document.getElementById("addFail").addEventListener("click",()=>openFail(null));
+document.getElementById("selWTask").addEventListener("change",renderWork);
+function openFail(f){
+  editFail = f;
+  const tid = document.getElementById("selWTask").value;
+  const rows = S.steps.filter(s=>s.taskId===tid), nums = stepNumbers(tid);
+  if(!rows.length){ toast("Break the task into steps first (Step 4)."); return; }
+  document.getElementById("f_step").innerHTML = rows.map((s,i)=>`<option value="${s.id}">${nums[i]} ${esc(s.text||"(untitled step)")}</option>`).join("");
+  if(f) document.getElementById("f_step").value = f.stepId;
+  document.getElementById("f_gw").innerHTML = GUIDEWORDS.map(g=>
+    `<div style="width:100%;font-size:.72rem;color:var(--ink3);margin:.35rem 0 .1rem">${esc(g.g)}</div>`+
+    g.items.map(([c,d])=>`<button type="button" class="chip${f&&(f.gw||[]).includes(c)?" on":""}" data-gw="${c}" title="${esc(d)}"><small>${c}</small>${esc(d)}</button>`).join("")
+  ).join("");
+  document.getElementById("f_gw").querySelectorAll("[data-gw]").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("on")));
+  document.getElementById("f_pif").innerHTML = PIFS.map(g=>
+    `<div style="width:100%;font-size:.72rem;color:var(--ink3);margin:.35rem 0 .1rem">${esc(g.g)}</div>`+
+    g.items.map(p=>`<button type="button" class="chip${f&&(f.pifs||[]).includes(p)?" on":""}" data-pif="${esc(p)}">${esc(p)}</button>`).join("")
+  ).join("");
+  document.getElementById("f_pif").querySelectorAll("[data-pif]").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("on")));
+  document.getElementById("f_desc").value = f? f.desc : "";
+  document.getElementById("f_cons").value = f? f.cons : "";
+  document.getElementById("f_safe").value = f? f.safe : "";
+  document.getElementById("f_type").value = f? f.ftype : FAILTYPES[0];
+  document.getElementById("f_sev").value = f? (f.sev||"") : "";
+  document.getElementById("f_lik").value = f? (f.lik||"") : "";
+  measDraft = f? JSON.parse(JSON.stringify(f.meas||[])) : [];
+  paintMeas(); riskPreview();
+  document.getElementById("f_del").style.display = f? "" : "none";
+  dFail.showModal();
+}
+document.getElementById("f_addm").addEventListener("click",()=>{ measDraft.push({text:"",hier:5,owner:"",due:"",status:"Open"}); paintMeas(); });
+function paintMeas(){
+  const box = document.getElementById("f_meas");
+  if(!measDraft.length){ box.innerHTML = `<p class="hint">No measures yet. Work down the hierarchy: can the hazard go, can the person be taken out of the loop, can a barrier stop the consequence?</p>`; return; }
+  box.innerHTML = measDraft.map((m,i)=>`
+    <div class="grid g4" style="margin-bottom:.5rem;align-items:end">
+      <div style="grid-column:span 2"><label class="fl">Measure ${i+1}</label><input type="text" data-m="text" data-i="${i}" value="${esc(m.text)}" placeholder="What will be done"></div>
+      <div><label class="fl">Level</label><select data-m="hier" data-i="${i}">${HIER.map(h=>`<option value="${h.v}"${+m.hier===h.v?" selected":""}>${h.t}</option>`).join("")}</select></div>
+      <div style="display:flex;gap:.3rem;align-items:end">
+        <div style="flex:1"><label class="fl">Owner</label><input type="text" data-m="owner" data-i="${i}" value="${esc(m.owner)}"></div>
+        <button class="btn sm danger" type="button" data-rm="${i}">✕</button>
+      </div>
+      <div><label class="fl">Due</label><input type="date" data-m="due" data-i="${i}" value="${esc(m.due)}"></div>
+      <div><label class="fl">Status</label><select data-m="status" data-i="${i}">${["Open","In progress","Closed"].map(s=>`<option${m.status===s?" selected":""}>${s}</option>`).join("")}</select></div>
+    </div>`).join("");
+  box.querySelectorAll("[data-m]").forEach(el=>el.addEventListener("input",()=>{ measDraft[+el.dataset.i][el.dataset.m] = el.value; }));
+  box.querySelectorAll("[data-rm]").forEach(b=>b.addEventListener("click",()=>{ measDraft.splice(+b.dataset.rm,1); paintMeas(); }));
+}
+document.getElementById("f_save").addEventListener("click",()=>{
+  const o = { taskId: document.getElementById("selWTask").value, stepId: val("f_step"),
+    gw:[...document.getElementById("f_gw").querySelectorAll(".chip.on")].map(b=>b.dataset.gw),
+    pifs:[...document.getElementById("f_pif").querySelectorAll(".chip.on")].map(b=>b.dataset.pif),
+    desc:val("f_desc"), cons:val("f_cons"), safe:val("f_safe"), ftype:val("f_type"),
+    sev:val("f_sev"), lik:val("f_lik"), meas:measDraft.filter(m=>m.text.trim()) };
+  if(!o.desc){ toast("Describe the failure."); return; }
+  if(editFail) Object.assign(editFail,o); else S.fails.push(Object.assign({id:uid("f")},o));
+  save(); dFail.close(); render(); toast("Failure saved.");
+});
+document.getElementById("f_del").addEventListener("click",()=>{
+  if(!editFail) return; if(!confirm("Delete this failure and its measures?")) return;
+  S.fails = S.fails.filter(x=>x!==editFail); save(); dFail.close(); render(); toast("Failure deleted.");
+});
+function renderWork(){
+  taskOptions("selWTask");
+  const tid = document.getElementById("selWTask").value;
+  const box = document.getElementById("p-worksheet").querySelector(".wrap");
+  if(!S.tasks.length){ box.innerHTML = `<div class="empty"><p>Add a task and break it into steps before analysing failures.</p></div>`; return; }
+  const rows = S.fails.filter(f=>f.taskId===tid);
+  if(!rows.length){ box.innerHTML = `<div class="empty"><p>No failures recorded for this task. Take each step in turn and ask what could go wrong with it — something missed, done to the wrong item, done too late, or information not passed on.</p><button class="btn primary" onclick="document.getElementById('addFail').click()">Add the first failure</button></div>`; return; }
+  box.innerHTML = '<table class="tbl" id="tWork"></table>';
+  const tb = document.getElementById("tWork");
+  tb.innerHTML = `<thead><tr><th style="width:11rem">Step</th><th style="width:5rem">Prompt</th><th>Potential failure</th><th style="width:13rem">Consequence</th><th style="width:12rem">Existing controls</th><th style="width:12rem">Influencing factors</th><th style="width:6rem">Risk</th><th style="width:13rem">Additional measures</th><th class="no-print" style="width:4rem"></th></tr></thead><tbody>`+
+  rows.map(f=>{
+    const r = riskBand(f.sev,f.lik);
+    return `<tr>
+      <td class="hint">${esc(stepLabel(f.stepId))}</td>
+      <td class="ref">${(f.gw||[]).join(" ")||"—"}</td>
+      <td><strong>${esc(f.desc)}</strong><div class="hint">${esc((f.ftype||"").split(" — ")[0])}</div></td>
+      <td>${esc(f.cons)}</td><td>${esc(f.safe)}</td>
+      <td class="hint">${(f.pifs||[]).map(esc).join("; ")}</td>
+      <td><span class="pill ${r.cls}">${r.band}</span></td>
+      <td>${(f.meas||[]).map(m=>`<div>${esc(m.text)} <span class="pill p-low">L${m.hier}</span></div>`).join("")||'<span class="hint">none</span>'}</td>
+      <td class="no-print"><div class="row-actions"><button class="btn sm" data-ef="${f.id}">Edit</button></div></td></tr>`;
+  }).join("")+`</tbody>`;
+  tb.querySelectorAll("[data-ef]").forEach(b=>b.addEventListener("click",()=>openFail(S.fails.find(x=>x.id===b.dataset.ef))));
+}
+
+/* ============================================================
+   STEP 6 — MEASURES
+   ============================================================ */
+function allMeasures(){
+  const out = [];
+  S.fails.forEach(f=>(f.meas||[]).forEach((m,i)=>{
+    const t = S.tasks.find(x=>x.id===f.taskId);
+    out.push({f,m,i,taskRef:t?t.ref:"",taskTitle:t?t.title:"",step:stepLabel(f.stepId)});
+  }));
+  return out;
+}
+function renderMeas(){
+  const all = allMeasures();
+  const counts = [1,2,3,4,5].map(v=>all.filter(x=>+x.m.hier===v).length);
+  const colors = ["#1E6B3A","#0B6B70","#2D6FA8","#B26A00","#6B7A86"];
+  document.getElementById("hierStats").innerHTML = HIER.map((h,i)=>
+    `<div class="stat"><b>${counts[i]}</b><span>${esc(h.t)}</span></div>`).join("");
+  const box = document.getElementById("p-measures").querySelector(".wrap");
+  if(!all.length){ box.innerHTML = `<div class="empty"><p>Measures added against a failure in Step 5 appear here, grouped so you can see whether you are relying too much on procedures and training.</p></div>`; return; }
+  box.innerHTML = '<table class="tbl" id="tMeas"></table>';
+  document.getElementById("tMeas").innerHTML =
+    `<thead><tr><th style="width:5rem">Task</th><th style="width:11rem">Step</th><th>Failure</th><th>Measure</th><th style="width:7rem">Level</th><th style="width:10rem">Suits this failure?</th></tr></thead><tbody>`+
+    [1,2,3,4,5].flatMap(v=>all.filter(x=>+x.m.hier===v)).map(x=>{
+      const fit = fitCheck(x.f.ftype, +x.m.hier);
+      return `<tr><td class="ref">${esc(x.taskRef)}</td><td class="hint">${esc(x.step)}</td>
+      <td>${esc(x.f.desc)}</td><td>${esc(x.m.text)}</td>
+      <td><span class="pill ${+x.m.hier<=2?"p-done":(+x.m.hier<=4?"p-med":"p-low")}">Level ${x.m.hier}</span></td>
+      <td class="hint">${esc(fit)}</td></tr>`;
+    }).join("")+`</tbody>`;
+}
+function fitCheck(ftype, hier){
+  const t = (ftype||"").split(" — ")[0];
+  if(hier<=3) return "Works for any failure type.";
+  if(t==="Slip"||t==="Lapse") return hier===5 ? "Weak for slips and lapses — prefer design or a prompt." : "Reasonable fit.";
+  if(t==="Mistake") return "Good fit — procedures, training and decision aids help mistakes.";
+  if(t==="Violation") return "Check why the rule is not followed before relying on this.";
+  return "";
+}
+
+/* ============================================================
+   STEP 7 — REVIEW
+   ============================================================ */
+function renderReview(){
+  const nT=S.tasks.length, nS=S.steps.length, nF=S.fails.length, nM=allMeasures().length;
+  const scr = S.tasks.filter(t=>taskPriority(t).band!=="Not screened").length;
+  const withSteps = S.tasks.filter(t=>S.steps.some(s=>s.taskId===t.id)).length;
+  const withFails = S.tasks.filter(t=>S.fails.some(f=>f.taskId===t.id)).length;
+  const lowOnly = S.fails.filter(f=>(f.meas||[]).length && (f.meas||[]).every(m=>+m.hier===5)).length;
+  document.getElementById("revStats").innerHTML = `
+    <div class="stat"><b>${S.hazards.length}</b><span>Hazards</span></div>
+    <div class="stat"><b>${nT}</b><span>Tasks (${scr} screened)</span></div>
+    <div class="stat"><b>${nS}</b><span>Task steps</span></div>
+    <div class="stat"><b>${nF}</b><span>Failures identified</span></div>
+    <div class="stat"><b>${nM}</b><span>Measures</span></div>`;
+  const gaps = [];
+  if(!S.hazards.length) gaps.push("No hazards recorded — the study has nothing to anchor to.");
+  if(nT && scr<nT) gaps.push(`${nT-scr} task(s) not screened for priority.`);
+  if(nT && withSteps<nT) gaps.push(`${nT-withSteps} task(s) have no steps.`);
+  if(nT && withFails<nT) gaps.push(`${nT-withFails} task(s) have no failures analysed.`);
+  const noEv = S.tasks.filter(t=>!t.ev||!(t.ev.intv||t.ev.obs||t.ev.walk)).length;
+  if(noEv) gaps.push(`${noEv} task(s) rest on document review alone — no interview, observation or walk-through.`);
+  const noPif = S.fails.filter(f=>!(f.pifs||[]).length).length;
+  if(noPif) gaps.push(`${noPif} failure(s) have no influencing factors recorded.`);
+  const noMeas = S.fails.filter(f=>!(f.meas||[]).length).length;
+  if(noMeas) gaps.push(`${noMeas} failure(s) have no additional measure and no note of why none is needed.`);
+  if(lowOnly) gaps.push(`${lowOnly} failure(s) are controlled only by level 5 measures — check whether anything higher is reasonably practicable.`);
+  const noViol = S.fails.some(f=>(f.ftype||"").startsWith("Violation"));
+  if(nF && !noViol) gaps.push("No departures from the rule considered. Ask whether the correct method is also the easiest one.");
+  const noOwner = allMeasures().filter(x=>!x.m.owner||!x.m.due).length;
+  if(noOwner) gaps.push(`${noOwner} measure(s) have no owner or no date.`);
+  document.getElementById("autoGaps").innerHTML = gaps.length
+    ? "<ul style='margin:0;padding-left:1.1rem'>"+gaps.map(g=>`<li style="margin-bottom:.35rem;font-size:.86rem">${esc(g)}</li>`).join("")+"</ul>"
+    : `<p class="hint">No gaps found. The study looks complete against the automatic checks.</p>`;
+  document.getElementById("qc").innerHTML = QCHECKS.map((q,i)=>
+    `<li><label><input type="checkbox" data-qc="${i}" ${S.qc[i]?"checked":""}><span>${esc(q)}</span></label></li>`).join("");
+  document.getElementById("qc").querySelectorAll("[data-qc]").forEach(c=>c.addEventListener("change",()=>{
+    S.qc[+c.dataset.qc] = c.checked; save();
+  }));
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function renderActions(){
+  const f = document.getElementById("fStatus").value;
+  const all = allMeasures().filter(x=>x.m.owner || x.m.due || x.m.text).filter(x=>!f || x.m.status===f);
+  const box = document.getElementById("p-actions").querySelector(".wrap");
+  if(!all.length){ box.innerHTML = `<div class="empty"><p>Measures with an owner appear here as a register you can export and track.</p></div>`; return; }
+  box.innerHTML = '<table class="tbl" id="tAct"></table>';
+  document.getElementById("tAct").innerHTML =
+    `<thead><tr><th style="width:3rem">No.</th><th style="width:5rem">Task</th><th>Action</th><th style="width:5rem">Level</th><th style="width:10rem">Owner</th><th style="width:7rem">Due</th><th style="width:7rem">Status</th></tr></thead><tbody>`+
+    all.map((x,i)=>{
+      const cls = x.m.status==="Closed"?"p-done":(x.m.status==="In progress"?"p-med":"p-high");
+      return `<tr><td class="num">${i+1}</td><td class="ref">${esc(x.taskRef)}</td>
+      <td>${esc(x.m.text)}<div class="hint">${esc(x.f.desc)}</div></td>
+      <td class="num">${esc(x.m.hier)}</td><td>${esc(x.m.owner)||'<span class="hint">unassigned</span>'}</td>
+      <td class="ref">${esc(x.m.due)||"—"}</td><td><span class="pill ${cls}">${esc(x.m.status||"Open")}</span></td></tr>`;
+    }).join("")+`</tbody>`;
+}
+document.getElementById("fStatus").addEventListener("change",renderActions);
+
+/* ============================================================
+   FILE LINK — writes straight into a synced cloud folder
+   Uses the File System Access API where available (Chrome, Edge).
+   Falls back to download / file-input everywhere else.
+   ============================================================ */
+const canLink = () => typeof window.showSaveFilePicker === "function";
+let fileHandle = null, dirty = false, autoTimer = null;
+
+function fileName(){ return (S.meta.ref||"scta-study").replace(/[^\w.-]+/g,"_") + ".scta.json"; }
+const PICKER_TYPES = [{ description:"SCTA study", accept:{ "application/json":[".json"] } }];
+
+async function ensurePermission(handle, mode){
+  if(!handle || !handle.queryPermission) return true;
+  const opts = { mode: mode||"readwrite" };
+  if(await handle.queryPermission(opts) === "granted") return true;
+  return (await handle.requestPermission(opts)) === "granted";
+}
+async function writeHandle(){
+  if(!fileHandle) return false;
+  if(!await ensurePermission(fileHandle,"readwrite")) return false;
+  const w = await fileHandle.createWritable();
+  await w.write(JSON.stringify(S,null,2));
+  await w.close();
+  dirty = false; paintCloud();
+  return true;
+}
+async function linkFile(){
+  if(!canLink()){ toast("This browser cannot link a file. Use Save file instead."); return; }
+  try{
+    fileHandle = await window.showSaveFilePicker({ suggestedName: fileName(), types: PICKER_TYPES });
+    await writeHandle(); paintCloud(); toast("Linked. The study now saves into that file.");
+  }catch(e){ if(e && e.name!=="AbortError") toast("Could not link that file."); }
+}
+function unlinkFile(){
+  fileHandle = null; setAuto(false); paintCloud(); toast("Unlinked. Use Save file to download a copy.");
+}
+function setAuto(on){
+  const cb = document.getElementById("autoSave");
+  if(cb) cb.checked = on;
+  clearInterval(autoTimer); autoTimer = null;
+  if(on && fileHandle){
+    autoTimer = setInterval(()=>{ if(dirty) writeHandle().catch(()=>{}); }, 20000);
+  }
+}
+function paintCloud(){
+  const st = document.getElementById("cloudState");
+  const wrap = document.getElementById("tbFileWrap");
+  const nm = fileHandle ? fileHandle.name : "";
+  document.getElementById("lnkFile").textContent = fileHandle ? "Link to a different file…" : "Link to a file…";
+  document.getElementById("unlinkFile").hidden = !fileHandle;
+  document.getElementById("autoWrap").hidden = !fileHandle;
+  document.getElementById("btnSaveAs").hidden = !canLink();
+  wrap.hidden = !fileHandle;
+  document.getElementById("tbFile").textContent = nm || "—";
+  if(!canLink()){
+    st.textContent = "This browser saves by downloading a file. Chrome or Edge can write straight into a cloud folder instead.";
+  }else if(fileHandle){
+    st.innerHTML = "Saving into <strong>"+esc(nm)+"</strong>" + (dirty ? " — unsaved changes." : " — up to date.");
+  }else{
+    st.textContent = "Not linked to a file yet. Changes are held in this browser only.";
+  }
+}
+document.getElementById("lnkFile").addEventListener("click",linkFile);
+document.getElementById("unlinkFile").addEventListener("click",unlinkFile);
+document.getElementById("btnSaveAs").addEventListener("click",linkFile);
+document.getElementById("autoSave").addEventListener("change",e=>setAuto(e.target.checked));
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+function csv(rows){
+  return rows.map(r=>r.map(c=>{
+    const s = String(c==null?"":c);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(",")).join("\r\n");
+}
+function download(name, text, type){
+  const b = new Blob([text],{type:type||"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+document.getElementById("btnSave").addEventListener("click",async()=>{
+  if(fileHandle){
+    try{
+      if(await writeHandle()){ toast("Saved to "+fileHandle.name+"."); return; }
+      toast("Permission to write that file was refused.");
+      return;
+    }catch(e){ toast("Could not write to the linked file. Downloading a copy instead."); }
+  }
+  download(fileName(), JSON.stringify(S,null,2), "application/json");
+  toast("Study file saved.");
+});
+document.getElementById("btnOpen").addEventListener("click",async()=>{
+  if(typeof window.showOpenFilePicker === "function"){
+    try{
+      const [h] = await window.showOpenFilePicker({ types: PICKER_TYPES, multiple:false });
+      const f = await h.getFile();
+      const d = JSON.parse(await f.text());
+      if(!d || !d.meta) throw new Error("not a study file");
+      S = Object.assign(blank(), d); fileHandle = h; dirty = false;
+      save(); paintMeta(); paintTitle(); paintCloud(); render();
+      toast("Opened "+h.name+". Saving returns to this file.");
+    }catch(e){ if(e && e.name!=="AbortError") alert("That file could not be read as an SCTA study. Choose a file saved from this tool."); }
+    return;
+  }
+  const i = document.createElement("input"); i.type="file"; i.accept=".json,.scta.json,application/json";
+  i.onchange = () => {
+    const file = i.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const d = JSON.parse(r.result);
+        if(!d || !d.meta) throw new Error("not a study file");
+        S = Object.assign(blank(), d); save(); paintMeta(); paintTitle(); render();
+        toast("Study opened.");
+      }catch(e){ alert("That file could not be read as an SCTA study. Choose a file saved from this tool."); }
+    };
+    r.readAsText(file);
+  };
+  i.click();
+});
+document.getElementById("btnPrint").addEventListener("click",()=>window.print());
+document.getElementById("expWs").addEventListener("click",()=>{
+  const rows = [["Task ref","Task","Step","Prompts","Potential failure","Failure type","Consequence","Existing controls","Influencing factors","Severity","Likelihood","Risk","Measure","Level","Owner","Due","Status"]];
+  S.fails.forEach(f=>{
+    const t = S.tasks.find(x=>x.id===f.taskId)||{};
+    const r = riskBand(f.sev,f.lik);
+    const base = [t.ref||"",t.title||"",stepLabel(f.stepId),(f.gw||[]).join(" "),f.desc,f.ftype,f.cons,f.safe,(f.pifs||[]).join("; "),f.sev,f.lik,r.band];
+    if(!(f.meas||[]).length) rows.push(base.concat(["","","","",""]));
+    else f.meas.forEach(m=>rows.push(base.concat([m.text,m.hier,m.owner,m.due,m.status])));
+  });
+  download((S.meta.ref||"scta")+"-worksheet.csv", csv(rows), "text/csv;charset=utf-8");
+  toast("Worksheet exported.");
+});
+document.getElementById("expAct").addEventListener("click",()=>{
+  const rows = [["No.","Task ref","Task","Failure","Action","Hierarchy level","Owner","Due","Status"]];
+  allMeasures().forEach((x,i)=>rows.push([i+1,x.taskRef,x.taskTitle,x.f.desc,x.m.text,x.m.hier,x.m.owner,x.m.due,x.m.status]));
+  download((S.meta.ref||"scta")+"-actions.csv", csv(rows), "text/csv;charset=utf-8");
+  toast("Action register exported.");
+});
+
+/* ============================================================
+   EXAMPLE STUDY
+   ============================================================ */
+document.getElementById("btnExample").addEventListener("click",()=>{
+  if(S.tasks.length && !confirm("Replace the current study with the worked example?")) return;
+  S = example(); save(); paintMeta(); paintTitle(); render(); show("tasks");
+  toast("Worked example loaded.");
+});
+function example(){
+  const d = blank();
+  d.meta = { ref:"SCTA-2026-001", rev:"0", date:new Date().toISOString().slice(0,10),
+    site:"Offshore production platform", fac:"Wellhead area — gas-lifted wells",
+    lead:"Process safety engineer",
+    team:"Production operator — does the task\nProduction engineer\nIntegrity engineer\nOperations supervisor",
+    scope:"Covers the operator and engineering tasks that keep sand erosion of wellhead flowlines under control, from sampling through to inspection. Excludes downhole sand control design.",
+    review:"" };
+  const h1 = {id:uid("haz"), ref:"MAH-01", title:"Loss of containment from a wellhead flowline",
+    src:"Facility safety case / flowline bow tie", cons:"Gas release at the wellhead deck with potential for ignition",
+    desc:"Erosion of the first fitting downstream of the choke on wells producing sand."};
+  d.hazards = [h1];
+  const t1 = {id:uid("sct"), ref:"SCT-01", title:"Respond to a rise in sand production on a gas-lifted well",
+    cat:"Decision or assessment", role:"Senior production operator, with production and integrity engineers",
+    proc:"Standing instruction on sand content", sev:"4", rel:"4", frq:"3",
+    hazIds:[h1.id], notes:"Crosses three documents and three departments. No single procedure covers the whole task.",
+    ev:{proc:true,intv:true,obs:true,walk:false},
+    evNotes:"Two operators interviewed; sampling observed. In practice the result is logged and the shift moves on unless it exceeds the stop limit."};
+  const t2 = {id:uid("sct"), ref:"SCT-02", title:"Adjust gas-lift rate to recover an unstable well",
+    cat:"Non-routine operations", role:"Production operator with production engineering",
+    proc:"Gas lift operations framework", sev:"4", rel:"3", frq:"3",
+    hazIds:[h1.id], notes:"Adjustment is made against wellhead pressure; no limit on solids.",
+    ev:{proc:true,intv:true,obs:false,walk:true}, evNotes:"Talked through with the operator and the production engineer."};
+  d.tasks = [t1,t2];
+  const s = (taskId,lvl,text)=>({id:uid("st"),taskId,lvl,text});
+  d.steps = [
+    s(t1.id,0,"Take the routine well sample"),
+    s(t1.id,1,"Draw the sample at the agreed point and time"),
+    s(t1.id,1,"Measure the sand content and record the result"),
+    s(t1.id,0,"Compare the result with the action level"),
+    s(t1.id,0,"Decide what the result means for the well and the pipework"),
+    s(t1.id,0,"Tell the people who need to know"),
+    s(t1.id,1,"Inform the operations superintendent"),
+    s(t1.id,1,"Inform the integrity team so the flowline can be checked"),
+    s(t1.id,0,"Adjust the well and confirm the sand has come down"),
+    s(t2.id,0,"Confirm the well is under-lifted and needs recovery"),
+    s(t2.id,0,"Open the lift gas control valve in agreed steps"),
+    s(t2.id,0,"Watch the response and the well effluent"),
+    s(t2.id,0,"Return to the agreed setting and record what was done")
+  ];
+  const st = i=>d.steps[i].id;
+  d.fails = [
+    {id:uid("f"), taskId:t1.id, stepId:st(7), gw:["I1"], pifs:["Communication between teams or departments","Who is responsible is unclear","Procedure out of date or wrong"],
+     desc:"The sand result is recorded but never reaches the integrity team, so no inspection is requested.",
+     cons:"Erosion continues unseen between annual surveys until the pipe wall is lost.",
+     safe:"Annual thickness survey of the flowline.", ftype:"Mistake — wrong intention", sev:"4", lik:"4",
+     meas:[
+       {text:"Add a sand action level to the standing instruction that requires the integrity team to be told the same day.",hier:5,owner:"Production engineering",due:"",status:"Open"},
+       {text:"Fit an on-line sand monitor with an alarm so detection does not depend on a sample and a telephone call.",hier:2,owner:"Instrument engineering",due:"",status:"Open"}]},
+    {id:uid("f"), taskId:t1.id, stepId:st(4), gw:["R4","P2"], pifs:["Procedure out of date or wrong","No measurement available"],
+     desc:"A sand level several times higher than normal, but below the stop limit, is read as acceptable.",
+     cons:"The well keeps producing solids into carbon steel pipework with no limit set for the pipe.",
+     safe:"Stop limit in the standing instruction.", ftype:"Mistake — wrong intention", sev:"3", lik:"4",
+     meas:[{text:"Set a sand limit for each flowline based on what the pipe can tolerate, not a single field-wide figure.",hier:3,owner:"Integrity",due:"",status:"Open"}]},
+    {id:uid("f"), taskId:t2.id, stepId:st(10), gw:["A4"], pifs:["Time or production pressure","Procedure hard to follow","Management of change"],
+     desc:"Lift gas is increased beyond what the flowline can tolerate because no solids limit forms part of the decision.",
+     cons:"Step change in sand carried into the flowline; erosion rate rises sharply.",
+     safe:"Stepwise adjustment against wellhead pressure targets.", ftype:"Mistake — wrong intention", sev:"4", lik:"3",
+     meas:[{text:"Add a sand limit to the gas-lift framework so a rate increase is bounded by solids as well as pressure.",hier:5,owner:"Production engineering",due:"",status:"Open"},
+           {text:"Fit an erosion-resistant fitting at the first bend after the choke on wells that produce sand.",hier:3,owner:"Engineering",due:"",status:"In progress"}]}
+  ];
+  return d;
+}
+
+/* ---------- helpers ---------- */
+function val(id){ return document.getElementById(id).value; }
+function fillSel(id, pairs, blankFirst){
+  const el = document.getElementById(id);
+  el.innerHTML = (blankFirst?`<option value="">—</option>`:"") + pairs.map(p=>`<option value="${p[0]}">${esc(p[1])}</option>`).join("");
+}
+function paintCounts(){
+  document.getElementById("cHaz").textContent = S.hazards.length||"";
+  document.getElementById("cTask").textContent = S.tasks.length||"";
+  const ev = S.tasks.filter(t=>t.ev&&(t.ev.intv||t.ev.obs||t.ev.walk)).length;
+  document.getElementById("cEvid").textContent = S.tasks.length? ev+"/"+S.tasks.length : "";
+  document.getElementById("cStep").textContent = S.steps.length||"";
+  document.getElementById("cFail").textContent = S.fails.length||"";
+  document.getElementById("cMeas").textContent = allMeasures().length||"";
+  document.getElementById("cAct").textContent = allMeasures().filter(x=>x.m.status!=="Closed").length||"";
+}
+function render(){
+  paintTitle(); paintCounts();
+  renderHaz(); renderTasks(); renderEvid(); renderHTA(); renderWork(); renderMeas(); renderReview(); renderActions();
+}
+
+/* ---------- boot ---------- */
+load(); paintMeta(); paintCloud();
+show(readHash() || "setup");
+window.addEventListener("beforeunload",e=>{
+  save();
+  if(fileHandle && dirty){ e.preventDefault(); e.returnValue = ""; }
+});
+window.addEventListener("error", e => { console.error("SCTA Workbench:", e.message); });
+</script>
+</body>
+</html>
